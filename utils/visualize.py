@@ -1,10 +1,8 @@
+
 import numpy as np
+import torch
 from matplotlib import pyplot as plt
 from torchvision.utils import make_grid
-from typing import Dict, List, Optional, Tuple
-
-import torch
-
 
 TICKS_FONT_SIZE = 12
 LEGEND_FONT_SIZE = 12
@@ -13,8 +11,8 @@ TITLE_FONT_SIZE = 16
 
 
 def plot_training_curves(
-    train_losses: Dict[str, List[float]],
-    test_losses: Dict[str, List[float]],
+    train_losses: dict[str, list[float]],
+    test_losses: dict[str, list[float]],
     logscale_y: bool = False,
     logscale_x: bool = False,
 ) -> None:
@@ -48,8 +46,8 @@ def plot_training_curves(
 def show_samples(
     samples: np.ndarray | torch.Tensor,
     title: str,
-    figsize: Optional[Tuple[int, int]] = None,
-    nrow: Optional[int] = None,
+    figsize: tuple[int, int] | None = None,
+    nrow: int | None = None,
 ) -> None:
     if isinstance(samples, np.ndarray):
         samples = torch.Tensor(samples)
@@ -78,8 +76,8 @@ def visualize_images(data: np.ndarray, title: str) -> None:
 def visualize_2d_data(
     train_data: np.ndarray,
     test_data: np.ndarray,
-    train_labels: Optional[str] = None,
-    test_labels: Optional[str] = None,
+    train_labels: str | None = None,
+    test_labels: str | None = None,
 ) -> None:
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
     ax1.set_title("train", fontsize=TITLE_FONT_SIZE)
@@ -94,7 +92,7 @@ def visualize_2d_data(
 def visualize_2d_samples(
     data: np.ndarray,
     title: str,
-    labels: Optional[str] = None,
+    labels: str | None = None,
     xlabel: str = "x1",
     ylabel: str = "x2",
 ) -> None:
@@ -115,8 +113,8 @@ def visualize_2d_densities(
     y_grid: np.ndarray,
     densities: np.ndarray,
     title: str,
-    xlabel: Optional[str] = None,
-    ylabel: Optional[str] = None,
+    xlabel: str | None = None,
+    ylabel: str | None = None,
 ) -> None:
     densities = densities.reshape([y_grid.shape[0], y_grid.shape[1]])
     plt.figure(figsize=(5, 5))

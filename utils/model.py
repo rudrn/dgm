@@ -1,7 +1,6 @@
 # Base model class for deep generative models
 
 from abc import ABC, abstractmethod
-from typing import Dict, Union
 
 import numpy as np
 import torch
@@ -36,7 +35,7 @@ class BaseModel(nn.Module, ABC):
 
     @abstractmethod
     @torch.no_grad()
-    def sample(self, n: int) -> Union[np.ndarray, torch.Tensor]:
+    def sample(self, n: int) -> np.ndarray | torch.Tensor:
         """
         Generate samples from the model.
 

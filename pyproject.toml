@@ -19,3 +19,43 @@ dependencies = [
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/dgm"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+extend-exclude = ["notebooks", ".venv", "build", "dist"]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort (import sorting)
+    "B",    # flake8-bugbear (likely bugs)
+    "UP",   # pyupgrade (modern syntax)
+    "SIM",  # flake8-simplify
+    "C4",   # flake8-comprehensions
+    "RUF",  # ruff-specific
+    "N",    # pep8-naming
+]
+ignore = [
+    "E501",   # line too long (formatter handles it)
+    "N803",   # argument name should be lowercase (Q, K, V, X are standard in ML)
+    "N806",   # variable in function should be lowercase (same reason)
+    "E741",   # ambiguous variable name (l, I, O common in math)
+    "B008",   # function call in default argument (common in nn.Module)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]  # allow unused imports for re-exports
+"notebooks/*" = ["E402", "F401", "F811"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["dgm"]
+combine-as-imports = true
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+docstring-code-format = true
+skip-magic-trailing-comma = false

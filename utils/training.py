@@ -1,33 +1,30 @@
 from collections import defaultdict
+
+import numpy as np
+import torch
 from IPython.display import clear_output
-from typing import Dict, List, Optional
-
-import numpy as np 
-
-import torch 
-from torch.utils.data import DataLoader
-from torch.optim.optimizer import Optimizer
 from torch.optim.lr_scheduler import LRScheduler
-
+from torch.optim.optimizer import Optimizer
+from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
 
-from .visualize import show_samples, plot_training_curves
 from .model import BaseModel
+from .visualize import plot_training_curves, show_samples
 
 
 def train_epoch(
-        epoch: int,
-        model: BaseModel,
-        train_loader: DataLoader,
-        optimizer: Optimizer,
-        device: str = "cpu",
-        loss_key: str = "total",
-) -> defaultdict[str, List[float]]:
-    
+    epoch: int,
+    model: BaseModel,
+    train_loader: DataLoader,
+    optimizer: Optimizer,
+    device: str = "cpu",
+    loss_key: str = "total",
+) -> defaultdict[str, list[float]]:
+
     model.train()
 
     stats = defaultdict(list)
-    for x in tqdm(train_loader, desc = f"Training epoch {epoch}"):
+    for x in tqdm(train_loader, desc=f"Training epoch {epoch}"):
         x = x.to(device)
         losses = model.loss(x)
         optimizer.zero_grad()
@@ -41,16 +38,16 @@ def train_epoch(
 
 
 def eval_model(
-        epoch: int, 
-        model: BaseModel,
-        data_loader: DataLoader,
-        device: str = "cpu",
+    epoch: int,
+    model: BaseModel,
+    data_loader: DataLoader,
+    device: str = "cpu",
 ) -> defaultdict[str, float]:
-    
+
     model.eval()
     stats = defaultdict(float)
     with torch.no_grad():
-        for x in tqdm(data_loader, desc = f"Evaluating epoch {epoch}"):
+        for x in tqdm(data_loader, desc=f"Evaluating epoch {epoch}"):
             x = x.to(device)
             losses = model.loss(x)
             for k, v in losses.items():
@@ -62,36 +59,29 @@ def eval_model(
 
 
 def train_model(
-        model: BaseModel, 
-        train_loader: DataLoader,
-        test_loader: DataLoader,
-        epochs: int,
-        optimizer: Optimizer,
-        scheduler: Optional[LRScheduler] = None,
-        device: str = "cpu",
-        loss_key: str = "total_loss",
-        n_samples: int = 100,
-        visualize_samples: bool = True,
+    model: BaseModel,
+    train_loader: DataLoader,
+    test_loader: DataLoader,
+    epochs: int,
+    optimizer: Optimizer,
+    scheduler: LRScheduler | None = None,
+    device: str = "cpu",
+    loss_key: str = "total_loss",
+    n_samples: int = 100,
+    visualize_samples: bool = True,
 ) -> None:
-    
-    train_losses: Dict[str, List[float]] = defaultdict(list)
-    test_losses: Dict[str, List[float]] = defaultdict(list)
+
+    train_losses: dict[str, list[float]] = defaultdict(list)
+    test_losses: dict[str, list[float]] = defaultdict(list)
     model = model.to(device)
     print("Start of the training")
 
-    for epoch in range(1, epochs + 1): 
-        train_loss = train_epoch(
-            epoch,  
-            model, 
-            train_loader, 
-            optimizer, 
-            device, 
-            loss_key
-        )
+    for epoch in range(1, epochs + 1):
+        train_loss = train_epoch(epoch, model, train_loader, optimizer, device, loss_key)
         if scheduler is not None:
             scheduler.step()
         test_loss = eval_model(
-            epoch, 
+            epoch,
             model,
             test_loader,
             device,
@@ -101,27 +91,21 @@ def train_model(
             train_losses[k].extend(train_loss[k])
             test_losses[k].append(test_loss[k])
 
-        epoch_loss = np.mean(train_loss[loss_key])  
+        epoch_loss = np.mean(train_loss[loss_key])
         if visualize_samples:
             with torch.no_grad():
                 samples = model.sample(n_samples)
                 if isinstance(samples, torch.Tensor):
                     samples = samples.cpu().detach().numpy()
 
-            clear_output(wait = True)
+            clear_output(wait=True)
             title = f"Samples, epoch: {epoch}, {loss_key}: {epoch_loss:.3f}"
-            show_samples(samples, title = title)
+            show_samples(samples, title=title)
             plot_training_curves(train_losses, test_losses)
         else:
-             print(f"Epoch: {epoch}, loss: {epoch_loss}")
+            print(f"Epoch: {epoch}, loss: {epoch_loss}")
 
     if not visualize_samples:
         plot_training_curves(train_losses, test_losses)
 
     print("End of the training")
-    
-
-            
-
-
-
