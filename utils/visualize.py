@@ -1,4 +1,3 @@
-
 import numpy as np
 import torch
 from matplotlib import pyplot as plt
@@ -16,8 +15,8 @@ def plot_training_curves(
     logscale_y: bool = False,
     logscale_x: bool = False,
 ) -> None:
-    n_train = len(train_losses[list(train_losses.keys())[0]])
-    n_test = len(test_losses[list(test_losses.keys())[0]])
+    n_train = len(train_losses[next(iter(train_losses))])
+    n_test = len(test_losses[next(iter(test_losses))])
     x_train = np.linspace(0, n_test - 1, n_train)
     x_test = np.arange(n_test)
 

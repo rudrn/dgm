@@ -20,7 +20,6 @@ def train_epoch(
     device: str = "cpu",
     loss_key: str = "total",
 ) -> defaultdict[str, list[float]]:
-
     model.train()
 
     stats = defaultdict(list)
@@ -43,7 +42,6 @@ def eval_model(
     data_loader: DataLoader,
     device: str = "cpu",
 ) -> defaultdict[str, float]:
-
     model.eval()
     stats = defaultdict(float)
     with torch.no_grad():
@@ -53,7 +51,7 @@ def eval_model(
             for k, v in losses.items():
                 stats[k] += v.item() * x.shape[0]
 
-        for k in stats.keys():
+        for k in stats:
             stats[k] /= len(data_loader.dataset)
         return stats
 
@@ -70,7 +68,6 @@ def train_model(
     n_samples: int = 100,
     visualize_samples: bool = True,
 ) -> None:
-
     train_losses: dict[str, list[float]] = defaultdict(list)
     test_losses: dict[str, list[float]] = defaultdict(list)
     model = model.to(device)
@@ -87,7 +84,7 @@ def train_model(
             device,
         )
 
-        for k in train_loss.keys():
+        for k in train_loss:
             train_losses[k].extend(train_loss[k])
             test_losses[k].append(test_loss[k])
 

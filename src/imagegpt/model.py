@@ -97,7 +97,6 @@ class MultiHeadAttention(nn.Module):
         mask: torch.Tensor,
         dropout: nn.Dropout,
     ) -> tuple[torch.Tensor, ...]:
-
         d_k = query.shape[-1]
         # (bs, h, seq_len, d_k) @ (bs, h, d_k, seq_len) -> (bs, h, seq_len, seq_len)
         attention_scores = (query @ key.transpose(-2, -1)) / math.sqrt(d_k)

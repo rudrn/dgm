@@ -60,7 +60,6 @@ def load_dataset(
     with_targets: bool = False,
     root: Path = "./",
 ) -> tuple[np.ndarray, ...]:
-
     dataset = _load_dataset(name, with_targets, root)
 
     train_data = dataset[0]

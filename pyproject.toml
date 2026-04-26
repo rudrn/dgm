@@ -40,6 +40,7 @@ select = [
 ]
 ignore = [
     "E501",   # line too long (formatter handles it)
+    "N802",   # function name should be lowercase (allow load_MNIST etc — dataset acronyms)
     "N803",   # argument name should be lowercase (Q, K, V, X are standard in ML)
     "N806",   # variable in function should be lowercase (same reason)
     "E741",   # ambiguous variable name (l, I, O common in math)
