@@ -45,6 +45,7 @@ ignore = [
     "N806",   # variable in function should be lowercase (same reason)
     "E741",   # ambiguous variable name (l, I, O common in math)
     "B008",   # function call in default argument (common in nn.Module)
+    "N812",   # lowercase `functional` imported as non-lowercase `F`
 ]
 
 [tool.ruff.lint.per-file-ignores]

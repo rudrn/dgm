@@ -1,7 +1,11 @@
 import math
 
+import numpy as np
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
+
+from utils.model import BaseModel
 
 
 class LayerNormalization(nn.Module):
@@ -9,7 +13,7 @@ class LayerNormalization(nn.Module):
         super().__init__()
         self.eps = eps
         self.alpha = nn.Parameter(torch.ones(dims))
-        self.bias = nn.Parameter(torch.ones(dims))
+        self.bias = nn.Parameter(torch.zeros(dims))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         # x: (batch_size, seq_len, hidden_size)
@@ -60,7 +64,7 @@ class TokenEmbeddings(nn.Module):
 
     def add_position_embedding(self, x: torch.Tensor) -> torch.Tensor:
         # x: (bs, seq_len, d_model)
-        positions = torch.arange(x.shape[1]).to(x.device)
+        positions = torch.arange(x.shape[1], device=x.device)
         pos_embs = self.pos_embeddings(positions).unsqueeze(0)
         return x + pos_embs
 
@@ -134,3 +138,77 @@ class MultiHeadAttention(nn.Module):
         # multiply by Wo
         # (batch, seq_len, d_model) --> (batch, seq_len, d_model)
         return self.w_o(x)
+
+
+class DecoderBlock(nn.Module):
+    def __init__(
+        self,
+        d_model: int,
+        d_ff: int,
+        num_heads: int,
+        dropout: float,
+    ) -> None:
+        super().__init__()
+        self.ln1 = LayerNormalization(d_model)
+        self.attn = MultiHeadAttention(d_model, num_heads, dropout)
+        self.ln2 = LayerNormalization(d_model)
+        self.ff = FeedForwardBlock(d_model, d_ff, dropout)
+
+    def _get_self_attention_mask(self, x: torch.Tensor) -> torch.Tensor:
+        T = x.shape[-2]
+        return torch.tril(torch.ones((T, T), device=x.device), diagonal=0)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        attn_mask = self._get_self_attention_mask(x)
+        h = self.ln1(x)
+        x = x + self.attn(h, h, h, attn_mask)
+        return x + self.ff(self.ln2(x))
+
+
+class ImageGPT(BaseModel):
+    def __init__(
+        self,
+        input_shape: tuple[int, int],
+        vocab_size: int,
+        d_model: int,
+        d_ff: int,
+        num_heads: int,
+        dropout: float,
+        num_transformer_blocks: int,
+    ) -> None:
+        super().__init__()
+
+        self.input_shape = input_shape
+        self.vocab_size = vocab_size
+        self.embeddings = TokenEmbeddings(
+            d_model, vocab_size, input_shape[0] * input_shape[1], dropout
+        )
+        self.net = nn.ModuleList(
+            DecoderBlock(d_model, d_ff, num_heads, dropout) for _ in range(num_transformer_blocks)
+        )
+
+        self.ln_f = LayerNormalization(d_model)
+        self.final = nn.Linear(d_model, vocab_size, bias=False)
+
+        self.criterion = nn.CrossEntropyLoss()
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = self.embeddings(x)
+        for block in self.net:
+            x = block(x)
+        return self.final(self.ln_f(x))
+
+    def loss(self, x: torch.Tensor) -> dict:
+        logits = self(x)
+        loss = self.criterion(logits.reshape(-1, self.vocab_size), x.reshape(-1))
+        return {"total_loss": loss}
+
+    def sample(self, n_samples: int) -> np.ndarray:
+        seq_len = self.input_shape[0] * self.input_shape[1]
+        samples = torch.zeros(n_samples, seq_len).long().to(self.device)
+        for i in range(seq_len):
+            logits = self(samples)
+            probs = F.softmax(logits[:, i], dim=-1)
+            samples[:, i] = torch.multinomial(probs, num_samples=1).squeeze(-1)
+        samples = samples.reshape(n_samples, *self.input_shape)
+        return samples.cpu().numpy()
